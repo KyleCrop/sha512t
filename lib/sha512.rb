@@ -92,7 +92,7 @@ class Sha512
     h6 = iv[6]
     h7 = iv[7]
 
-    for i in 1..p.size/15
+    for i in 1..p.size/16
 
       # Initialize the eight working variables, a, b, c, d, e, f, g, and h, with the (i-1)-st hash value:
       a, b, c, d, e, f, g, h = h0, h1, h2, h3, h4, h5, h6, h7
