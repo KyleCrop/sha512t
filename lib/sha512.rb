@@ -41,44 +41,21 @@ class Sha512
   end
 
   def preprocessing(message)
-    # Preprocessing Step 1: Padding the message  
-    bytes = message.bytes.to_a 
-    l = bytes.size * 8
-    padded_message = ""
-    zero = "0"
-
-    bytes.each do |byte|
-      bit = byte.to_s(2)
-      if bit.length < 8
-        bit = (zero * (8 - bit.length)) + bit
-      end
-      padded_message += bit
-    end
+    # Preprocessing Step 1: Padding the message
+    preprocessed_message = message.unpack('B*')[0]
+    message_length = preprocessed_message.length
     
     # padding with a one bit
-    padded_message += "1"
+    preprocessed_message += "1"
     
     # add k zero bits, where k is the smallest non-negative solution to the equation l+1+k = 896 mod 1024
-    blocks = (896-(l+1))
-    while blocks < 0 do
-      blocks += 1024
-    end
-    padded_message += zero * blocks
+    preprocessed_message += "0" * ((896-(message_length+1)) % 1024)
 
     # append 128-bit block that is equal to the number of l expressed using a binary representation
-    last_bit_block = l.to_s(2)
-    if last_bit_block.length < 128
-      last_bit_block = (zero * (128 - last_bit_block.length)) + last_bit_block
-    end
-    padded_message += last_bit_block
+    preprocessed_message += message_length.to_s(2).rjust(128, '0')
 
     # Preprocessing Step 2: Parsing the message
-    parsed_message = []
-    for block in 0..padded_message.size/64-1
-      parsed_message.push(padded_message[(64*block)..(64*block)+63])
-    end
-
-    return parsed_message
+    return preprocessed_message.chars.each_slice(64).map(&:join)
   end
 
   def hash_computation(p, iv)
@@ -139,11 +116,7 @@ class Sha512
     # Convert hash to hex-String    
     hash_string = ""
     hash.each do |h|
-      temp = h.to_s(16)
-      if temp.length < 16
-        temp = "0" * (16 - temp.length) + temp
-      end
-      hash_string += temp
+      hash_string += h.to_s(16).rjust(16, '0')
     end
     return hash_string
   end
@@ -165,9 +138,9 @@ class Sha512
     # consists of two steps: 
     # 1. padding the message,
     # 2. parsing the message into message blocks
-    parsed_message = Sha512.new.preprocessing(message)
+    preprocessed_massage = Sha512.new.preprocessing(message)
 
     # Hash Computation
-    return Sha512.new.hash_computation(parsed_message, sha512_initial_hash_value)
+    return Sha512.new.hash_computation(preprocessed_massage, sha512_initial_hash_value)
   end
 end
